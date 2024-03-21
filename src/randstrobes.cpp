@@ -46,9 +46,6 @@ static inline syncmer_hash_t syncmer_smer_hash(uint64_t packed) {
 }
 
 static inline randstrobe_hash_t randstrobe_hash(syncmer_hash_t hash1, syncmer_hash_t hash2, size_t aux_len) {
-    if (hash1 > hash2) {
-        std::swap(hash1, hash2);
-    }
     return ((hash1 >> aux_len) << aux_len) ^ (hash2 >> (64 - aux_len));
 }
 
@@ -171,7 +168,8 @@ Randstrobe RandstrobeIterator::get(unsigned int strobe1_index) const {
         }
     }
 
-    bool main_is_first = strobe1.hash < strobe2.hash;
+//    bool main_is_first = strobe1.hash < strobe2.hash;
+    bool main_is_first = true;
     return Randstrobe{
         randstrobe_hash(strobe1.hash, strobe2.hash, aux_len),
                       static_cast<uint32_t>(strobe1.position),
@@ -207,7 +205,8 @@ Randstrobe RandstrobeGenerator::next() {
         }
     }
     syncmers.pop_front();
-    bool main_is_first = strobe1.hash < strobe2.hash;
+//    bool main_is_first = strobe1.hash < strobe2.hash;
+    bool main_is_first = true;
     return Randstrobe{
         randstrobe_hash(strobe1.hash, strobe2.hash, aux_len),
                       static_cast<uint32_t>(strobe1.position),
