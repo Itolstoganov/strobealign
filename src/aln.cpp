@@ -1027,7 +1027,7 @@ void align_or_map_paired(
 
         if (map_param.rescue_level > 1) {
             Timer rescue_timer;
-            if (nams.empty() || nonrepetitive_fraction_fw < 0.7 || nonrepetitive_fraction_rev < 0.7) {
+            if (nams.empty() || nonrepetitive_fraction_fw < 0.9999 || nonrepetitive_fraction_rev < 0.9999) {
                 nams = find_nams_rescue(query_randstrobes, index, map_param.rescue_cutoff);
                 details[is_revcomp].nam_rescue = true;
             }
@@ -1154,7 +1154,7 @@ void align_or_map_single(
 
     if (map_param.rescue_level > 1) {
         Timer rescue_timer;
-        if (nams.empty() || nonrepetitive_fraction_fw < 0.7 || nonrepetitive_fraction_rev < 0.7) {
+        if (nams.empty() || nonrepetitive_fraction_fw < 0.9999 || nonrepetitive_fraction_rev < 0.9999) {
             details.nam_rescue = true;
             nams = find_nams_rescue(query_randstrobes, index, map_param.rescue_cutoff);
         }
