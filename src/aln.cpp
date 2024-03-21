@@ -1022,12 +1022,12 @@ void align_or_map_paired(
 
         // Find NAMs
         Timer nam_timer;
-        auto [nonrepetitive_fraction, nams] = find_nams(query_randstrobes, index);
+        auto [nonrepetitive_fraction_fw, nonrepetitive_fraction_rev, nams] = find_nams(query_randstrobes, index);
         statistics.tot_find_nams += nam_timer.duration();
 
         if (map_param.rescue_level > 1) {
             Timer rescue_timer;
-            if (nams.empty() || nonrepetitive_fraction < 0.7) {
+            if (nams.empty() || nonrepetitive_fraction_fw < 0.7 || nonrepetitive_fraction_rev < 0.7) {
                 nams = find_nams_rescue(query_randstrobes, index, map_param.rescue_cutoff);
                 details[is_revcomp].nam_rescue = true;
             }
@@ -1149,12 +1149,12 @@ void align_or_map_single(
 
     // Find NAMs
     Timer nam_timer;
-    auto [nonrepetitive_fraction, nams] = find_nams(query_randstrobes, index);
+    auto [nonrepetitive_fraction_fw, nonrepetitive_fraction_rev, nams] = find_nams(query_randstrobes, index);
     statistics.tot_find_nams += nam_timer.duration();
 
     if (map_param.rescue_level > 1) {
         Timer rescue_timer;
-        if (nams.empty() || nonrepetitive_fraction < 0.7) {
+        if (nams.empty() || nonrepetitive_fraction_fw < 0.7 || nonrepetitive_fraction_rev < 0.7) {
             details.nam_rescue = true;
             nams = find_nams_rescue(query_randstrobes, index, map_param.rescue_cutoff);
         }

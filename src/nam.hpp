@@ -35,7 +35,13 @@ struct Nam {
     }
 };
 
-std::pair<float, std::vector<Nam>> find_nams(
+struct FindNamsResult {
+    float nonrepetitive_fraction_fw;
+    float nonrepetitite_fraction_rev;
+    std::vector<Nam> nams;
+};
+
+FindNamsResult find_nams(
     const QueryRandstrobeVector &query_randstrobes,
     const StrobemerIndex& index
 );
