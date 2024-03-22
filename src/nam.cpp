@@ -256,29 +256,27 @@ std::vector<Nam> find_nams_rescue(
     hits_rc.reserve(5000);
 
     for (auto &qr : query_randstrobes) {
-        size_t position = index.find(qr.hash);
+        size_t position = index.partial_find(qr.hash);
         if (position != index.end()) {
-            unsigned int count = index.get_count(position);
-            RescueHit rh{position, count, qr.start, qr.end};
-            if (qr.is_reverse){
+            unsigned int count = index.get_partial_count(position);
+            RescueHit rh{position, count, qr.partial_start, qr.partial_end};
+            if (qr.is_reverse) {
                 hits_rc.push_back(rh);
             } else {
                 hits_fw.push_back(rh);
             }
         }
     }
+    assert(hits_rc.size() == hits_fw.size());
 
     std::sort(hits_fw.begin(), hits_fw.end());
     std::sort(hits_rc.begin(), hits_rc.end());
     size_t is_revcomp = 0;
     for (auto& rescue_hits : {hits_fw, hits_rc}) {
-        int cnt = 0;
         for (auto &rh : rescue_hits) {
-            if ((rh.count > rescue_cutoff && cnt >= 5) || rh.count > 1000) {
-                break;
+            if (rh.count < rescue_cutoff) {
+                add_to_hits_per_ref_partial(hits_per_ref[is_revcomp], rh.query_start, rh.query_end, index, rh.position);
             }
-            add_to_hits_per_ref_full(hits_per_ref[is_revcomp], rh.query_start, rh.query_end, index, rh.position);
-            cnt++;
         }
         is_revcomp++;
     }
