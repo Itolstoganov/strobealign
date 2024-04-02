@@ -1154,7 +1154,7 @@ void align_or_map_single(
 
     if (map_param.rescue_level > 1) {
         Timer rescue_timer;
-        if (nams.empty() || nonrepetitive_fraction_fw < 0.9999 || nonrepetitive_fraction_rev < 0.9999) {
+        if (nams.empty()) {
             details.nam_rescue = true;
             nams = find_nams_rescue(query_randstrobes, index, map_param.rescue_cutoff);
         }
@@ -1172,7 +1172,7 @@ void align_or_map_single(
     size_t n_best = 0;
     switch (map_param.output_format) {
         case OutputFormat::Abundance: {
-            if (!nams.empty() || nonrepetitive_fraction_fw < 0.9999 || nonrepetitive_fraction_rev < 0.9999){
+            if (!nams.empty()){
                 for (auto &t : nams){
                     if (t.score == nams[0].score){
                         ++n_best;
