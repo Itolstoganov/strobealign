@@ -273,10 +273,12 @@ std::vector<Nam> find_nams_rescue(
     std::sort(hits_rc.begin(), hits_rc.end());
     size_t is_revcomp = 0;
     for (auto& rescue_hits : {hits_fw, hits_rc}) {
+        int cnt = 0;
         for (auto &rh : rescue_hits) {
-            if (rh.count < rescue_cutoff) {
+            if ((rh.count > rescue_cutoff && cnt >= 5) || rh.count > 1000) {
                 add_to_hits_per_ref_partial(hits_per_ref[is_revcomp], rh.query_start, rh.query_end, index, rh.position);
             }
+            ++cnt;
         }
         is_revcomp++;
     }

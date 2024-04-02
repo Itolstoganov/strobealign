@@ -1027,8 +1027,8 @@ void align_or_map_paired(
 
         if (map_param.rescue_level > 1) {
             Timer rescue_timer;
-            if (nams.empty() || nonrepetitive_fraction_fw < 0.9999 || nonrepetitive_fraction_rev < 0.9999) {
-                nams = find_nams_rescue(query_randstrobes, index, 10000);
+            if (nams.empty()) {
+                nams = find_nams_rescue(query_randstrobes, index, map_param.rescue_cutoff);
                 details[is_revcomp].nam_rescue = true;
             }
             statistics.tot_time_rescue += rescue_timer.duration();
@@ -1156,7 +1156,7 @@ void align_or_map_single(
         Timer rescue_timer;
         if (nams.empty() || nonrepetitive_fraction_fw < 0.9999 || nonrepetitive_fraction_rev < 0.9999) {
             details.nam_rescue = true;
-            nams = find_nams_rescue(query_randstrobes, index, 10000);
+            nams = find_nams_rescue(query_randstrobes, index, map_param.rescue_cutoff);
         }
         statistics.tot_time_rescue += rescue_timer.duration();
     }
@@ -1172,7 +1172,7 @@ void align_or_map_single(
     size_t n_best = 0;
     switch (map_param.output_format) {
         case OutputFormat::Abundance: {
-            if (!nams.empty()){
+            if (!nams.empty() || nonrepetitive_fraction_fw < 0.9999 || nonrepetitive_fraction_rev < 0.9999){
                 for (auto &t : nams){
                     if (t.score == nams[0].score){
                         ++n_best;
