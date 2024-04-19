@@ -103,7 +103,8 @@ Syncmer SyncmerIterator::next() {
                     qs_min_pos = i - s + 1;
                 }
             }
-            if ( (qs_min_pos == i + 1 - k) || (qs_min_pos == i + 1 - k + (k-s)) ) { // occurs at first or last position in k-mer, i.e., closed syncmer
+            if (qs_min_pos == i - k + t) { // occurs at t:th position in k-mer
+//            if ( (qs_min_pos == i + 1 - k) || (qs_min_pos == i + 1 - k + (k-s)) ) { // occurs at first or last position in k-mer, i.e., closed syncmer
                 uint64_t yk = std::min(xk[0], xk[1]);
                 auto syncmer = Syncmer{syncmer_kmer_hash(yk), i - k + 1};
                 i++;

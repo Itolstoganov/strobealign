@@ -28,9 +28,9 @@ struct SyncmerParameters {
         if (s > k) {
             throw BadParameter("s is larger than k");
         }
-//        if ((k - s) % 2 != 0) {
-//            throw BadParameter("(k - s) must be an even number to create canonical syncmers. Please set s to e.g. k-2, k-4, k-6, ...");
-//        }
+        if ((k - s) % 2 != 0) {
+            throw BadParameter("(k - s) must be an even number to create canonical syncmers. Please set s to e.g. k-2, k-4, k-6, ...");
+        }
     }
 
     bool operator==(const SyncmerParameters& other) const;
@@ -85,7 +85,7 @@ public:
     IndexParameters(size_t canonical_read_length, int k, int s, int l, int u, int q, int max_dist, int aux_len)
         : canonical_read_length(canonical_read_length)
         , syncmer(k, s)
-        , randstrobe(l, u, q, max_dist, std::max(0, 2*k / (k - s + 1) + l), 2*k / (k - s + 1) + u, aux_len)
+        , randstrobe(l, u, q, max_dist, std::max(0, k / (k - s + 1) + l), k / (k - s + 1) + u, aux_len)
     {
     }
 
