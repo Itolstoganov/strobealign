@@ -1167,7 +1167,6 @@ void align_or_map_single(
     shuffle_top_nams(nams, random_engine);
     statistics.tot_sort_nams += nam_sort_timer.duration();
 
-
     Timer extend_timer;
     size_t n_best = 0;
     switch (map_param.output_format) {

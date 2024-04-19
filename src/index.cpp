@@ -134,7 +134,7 @@ void StrobemerIndex::read(const std::string& filename) {
 
 /* Pick a suitable number of bits for indexing randstrobe start indices */
 int StrobemerIndex::pick_bits(size_t size) const {
-    size_t estimated_number_of_randstrobes = size / (parameters.syncmer.k - parameters.syncmer.s + 1);
+    size_t estimated_number_of_randstrobes = 2*size / (parameters.syncmer.k - parameters.syncmer.s + 1);
     // Two randstrobes per bucket on average
     return std::clamp(static_cast<int>(log2(estimated_number_of_randstrobes)) - 1, 8, 31);
 }
@@ -164,6 +164,12 @@ void StrobemerIndex::populate(float f, unsigned n_threads) {
     randstrobes.assign(total_randstrobes, RefRandstrobe{0, 0, 0});
     assign_all_randstrobes(randstrobe_counts, n_threads);
     stats.elapsed_generating_seeds = randstrobes_timer.duration();
+
+//    for (int i = 0; i < randstrobes.size()-1; ++i) {
+//        if ( ((randstrobes[i+1].position - randstrobes[i].position) > 7) && (randstrobes[i+1].reference_index() == randstrobes[i].reference_index()) ) {
+//            std::cout << randstrobes[i].position << " " << randstrobes[i+1].position << std::endl;
+//        }
+//    }
 
     Timer sorting_timer;
     logger.debug() << "  Sorting ...\n";
