@@ -269,7 +269,7 @@ std::vector<Nam> find_nams_rescue(
             size_t partial_pos = index.partial_find(qr.hash);
             if (partial_pos != index.end()) {
                 unsigned int partial_count = index.get_partial_count(partial_pos);
-                RescueHit rh{partial_pos, partial_count, qr.partial_start, qr.partial_end,};
+                RescueHit rh{partial_pos, partial_count, qr.partial_start, qr.partial_end};
                 if (qr.is_reverse){
                     hits_rc.push_back(rh);
                 } else {
