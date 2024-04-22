@@ -10,6 +10,15 @@ struct Hit {
     int ref_end;
 };
 
+struct PartialSeed {
+        size_t hash;
+        unsigned int start;
+        bool is_reverse;
+        bool operator==(const PartialSeed& rhs) const {
+            return (hash == rhs.hash) && (start == rhs.start) && (is_reverse == rhs.is_reverse);
+        }
+    };
+
 inline void add_to_hits_per_ref_full(
     robin_hood::unordered_map<unsigned int, std::vector<Hit>>& hits_per_ref,
     int query_start,
@@ -205,6 +214,9 @@ std::pair<float, std::vector<Nam>> find_nams(
     const QueryRandstrobeVector &query_randstrobes,
     const StrobemerIndex& index
 ) {
+    const unsigned int aux_len = 24; //parameters.randstrobe.aux_len;
+    std::vector<PartialSeed> partial_queried; // TODO: is a small set more efficient than linear search in a small vector?
+    partial_queried.reserve(10);
     std::array<robin_hood::unordered_map<unsigned int, std::vector<Hit>>, 2> hits_per_ref;
     hits_per_ref[0].reserve(100);
     hits_per_ref[1].reserve(100);
@@ -220,14 +232,20 @@ std::pair<float, std::vector<Nam>> find_nams(
             add_to_hits_per_ref_full(hits_per_ref[q.is_reverse], q.start, q.end, index, position);
         }
         else {
-            size_t partial_pos = index.partial_find(q.hash);
-            if (partial_pos != index.end()) {
-                total_hits++;
-                if (index.is_partial_filtered(partial_pos)) {
-                    continue;
+            PartialSeed ph = {q.hash >> aux_len, q.partial_start, q.is_reverse};
+            bool already_queried = std::find(partial_queried.begin(), partial_queried.end(), ph) != partial_queried.end();
+            if ( !already_queried ){
+                size_t partial_pos = index.partial_find(q.hash);
+                if (partial_pos != index.end()) {
+                    total_hits++;
+                    if (index.is_partial_filtered(partial_pos)) {
+                        partial_queried.push_back(ph);
+                        continue;
+                    }
+                    nr_good_hits++;
+                    add_to_hits_per_ref_partial(hits_per_ref[q.is_reverse], q.partial_start, q.partial_end, index, partial_pos);
                 }
-                nr_good_hits++;
-                add_to_hits_per_ref_partial(hits_per_ref[q.is_reverse], q.partial_start, q.partial_end, index, partial_pos);
+                partial_queried.push_back(ph);
             }
         }
     }
@@ -257,7 +275,9 @@ std::vector<Nam> find_nams_rescue(
                 < std::tie(rhs.count, rhs.query_start, rhs.query_end);
         }
     };
-
+    const unsigned int aux_len = 24; //parameters.randstrobe.aux_len;
+    std::vector<PartialSeed> partial_queried;  // TODO: is a small set more efficient than linear search in a small vector?
+    partial_queried.reserve(10);
     std::array<robin_hood::unordered_map<unsigned int, std::vector<Hit>>, 2> hits_per_ref;
     std::vector<RescueHit> hits_fw;
     std::vector<RescueHit> hits_rc;
@@ -278,15 +298,20 @@ std::vector<Nam> find_nams_rescue(
             }
         }
         else {
-            size_t partial_pos = index.partial_find(qr.hash);
-            if (partial_pos != index.end()) {
-                unsigned int partial_count = index.get_partial_count(partial_pos);
-                RescueHit rh{partial_pos, partial_count, qr.partial_start, qr.partial_end};
-                if (qr.is_reverse){
-                    hits_rc.push_back(rh);
-                } else {
-                    hits_fw.push_back(rh);
+            PartialSeed ph = {qr.hash >> aux_len, qr.partial_start, qr.is_reverse};
+            bool already_queried = std::find(partial_queried.begin(), partial_queried.end(), ph) != partial_queried.end();
+            if ( !already_queried ){
+                size_t partial_pos = index.partial_find(qr.hash);
+                if (partial_pos != index.end()) {
+                    unsigned int partial_count = index.get_partial_count(partial_pos);
+                    RescueHit rh{partial_pos, partial_count, qr.partial_start, qr.partial_end};
+                    if (qr.is_reverse){
+                        hits_rc.push_back(rh);
+                    } else {
+                        hits_fw.push_back(rh);
+                    }
                 }
+                partial_queried.push_back(ph);
             }
         }
     }
