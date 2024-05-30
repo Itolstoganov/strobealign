@@ -19,7 +19,7 @@ inline void add_to_hits_per_ref(
     int min_diff = std::numeric_limits<int>::max();
     for (const auto hash = index.get_hash(position); index.get_hash(position) == hash; ++position) {
         int ref_start = index.get_strobe1_position(position);
-        int ref_end = ref_start + index.strobe2_offset(position) + index.k();
+        int ref_end = ref_start + index.strobe2_offset(position) + index.strobe3_offset(position) + index.k();
         int diff = std::abs((query_end - query_start) - (ref_end - ref_start));
         if (diff <= min_diff) {
             hits_per_ref[index.reference_index(position)].push_back(Hit{query_start, query_end, ref_start, ref_end});

@@ -19,6 +19,7 @@ using randstrobe_hash_t = uint64_t;
 
 struct RefRandstrobe {
     using packed_t = uint32_t;
+    static constexpr int bit_alloc = 16;
     randstrobe_hash_t hash;
     uint32_t position;
 
@@ -38,12 +39,16 @@ struct RefRandstrobe {
     }
 
     int strobe2_offset() const {
-        return m_packed & mask;
+        return (m_packed & mask2) >> (bit_alloc / 2);
+    }
+
+    int strobe3_offset() const {
+        return m_packed & mask3;
     }
 
 private:
-    static constexpr int bit_alloc = 8;
-    static constexpr int mask = (1 << bit_alloc) - 1;
+    static constexpr int mask2 = ((1 << bit_alloc / 2) - 1) << (bit_alloc / 2);
+    static constexpr int mask3 = (1 << bit_alloc / 2) - 1;
     packed_t m_packed; // packed representation of ref_index and strobe offset
 };
 
@@ -64,9 +69,10 @@ struct Randstrobe {
     randstrobe_hash_t hash;
     unsigned int strobe1_pos;
     unsigned int strobe2_pos;
+    unsigned int strobe3_pos;
 
     bool operator==(const Randstrobe& other) const {
-        return hash == other.hash && strobe1_pos == other.strobe1_pos && strobe2_pos == other.strobe2_pos;
+        return hash == other.hash && strobe1_pos == other.strobe1_pos && strobe2_pos == other.strobe2_pos && strobe3_pos == other.strobe3_pos;
     }
 
     bool operator!=(const Randstrobe& other) const {
@@ -108,11 +114,12 @@ public:
     }
 
     bool has_next() {
-        return strobe1_index + w_min < syncmers.size();
+        return strobe1_index + 2 * w_min < syncmers.size();
     }
 
 private:
     Randstrobe get(unsigned int strobe1_index) const;
+    uint get_next_strobe_index(unsigned int curr_strobe_index) const;
     const std::vector<Syncmer>& syncmers;
     const unsigned w_min;
     const unsigned w_max;
@@ -169,9 +176,11 @@ public:
     { }
 
     Randstrobe next();
-    Randstrobe end() const { return Randstrobe{0, 0, 0}; }
+    Randstrobe end() const { return Randstrobe{0, 0, 0, 0}; }
 
 private:
+    uint get_next_strobe_index(unsigned int curr_strobe_index) const;
+
     SyncmerIterator syncmer_iterator;
     const unsigned w_min;
     const unsigned w_max;
