@@ -151,6 +151,10 @@ struct StrobemerIndex {
         return randstrobes[position].strobe2_offset();
     }
 
+    int strobe3_offset(bucket_index_t position) const {
+        return randstrobes[position].strobe3_offset();
+    }
+
     int reference_index(bucket_index_t position) const {
         return randstrobes[position].reference_index();
     }

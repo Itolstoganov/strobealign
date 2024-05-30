@@ -45,11 +45,16 @@ static inline syncmer_hash_t syncmer_smer_hash(uint64_t packed) {
     return xxh64(packed);
 }
 
-static inline randstrobe_hash_t randstrobe_hash(syncmer_hash_t hash1, syncmer_hash_t hash2, size_t aux_len) {
-    if (hash1 > hash2) {
-        std::swap(hash1, hash2);
+static inline randstrobe_hash_t randstrobe_hash(syncmer_hash_t hash1,
+                                                syncmer_hash_t hash2,
+                                                syncmer_hash_t hash3,
+                                                size_t aux_len) {
+    if (hash1 > hash3) {
+        std::swap(hash1, hash3);
     }
-    return ((hash1 >> aux_len) << aux_len) ^ (hash2 >> (64 - aux_len));
+    return ((hash1 >> aux_len) << aux_len) ^
+            (hash2 >> (64 - aux_len / 2) << aux_len / 2) ^
+            (hash3 >> (64 - aux_len / 2));
 }
 
 std::ostream& operator<<(std::ostream& os, const Syncmer& syncmer) {
@@ -136,7 +141,7 @@ std::vector<Syncmer> canonical_syncmers(
 
 std::ostream& operator<<(std::ostream& os, const Randstrobe& randstrobe) {
     os << "Randstrobe(hash=" << randstrobe.hash << ", strobe1_pos=" << randstrobe.strobe1_pos << ", strobe2_pos="
-       << randstrobe.strobe2_pos << ", main_is_first=" << randstrobe.main_is_first << ")";
+       << randstrobe.strobe2_pos << ", strobe3_pos=" << randstrobe.strobe3_pos << ", main_is_first=" << randstrobe.main_is_first ;
     return os;
 }
 
@@ -151,77 +156,85 @@ std::ostream& operator<<(std::ostream& os, const QueryRandstrobe& randstrobe) {
 }
 
 Randstrobe RandstrobeIterator::get(unsigned int strobe1_index) const {
-    unsigned int w_end = std::min(static_cast<size_t>(strobe1_index + w_max), syncmers.size() - 1);
-
     auto strobe1 = syncmers[strobe1_index];
-    auto max_position = strobe1.position + max_dist;
-    unsigned int w_start = strobe1_index + w_min;
-    uint64_t min_val = std::numeric_limits<uint64_t>::max();
-    Syncmer strobe2 = strobe1;
+    uint strobe2_index = get_next_strobe_index(strobe1_index);
+    uint strobe3_index = get_next_strobe_index(strobe2_index);
+    auto strobe2 = syncmers[strobe2_index];
+    auto strobe3 = syncmers[strobe3_index];
 
-    if (syncmers.size() < w_start) {
-        return Randstrobe{
-                randstrobe_hash(strobe1.hash, 0, aux_len),
-                static_cast<uint32_t>(strobe1.position),
-                static_cast<uint32_t>(strobe1.position), true
-        };
-    }
+    bool main_is_first = strobe1.hash < strobe3.hash;
+    return Randstrobe{
+        randstrobe_hash(strobe1.hash, strobe2.hash, strobe3.hash, aux_len), static_cast<uint32_t>(strobe1.position),
+        static_cast<uint32_t>(strobe2.position), static_cast<uint32_t>(strobe3.position), main_is_first
+    };
+}
+uint RandstrobeIterator::get_next_strobe_index(unsigned int curr_strobe_index) const {
+    auto curr_strobe = syncmers[curr_strobe_index];
+    auto max_position = curr_strobe.position + max_dist;
+    unsigned int w_start = curr_strobe_index + w_min;
+    unsigned int w_end = std::min(static_cast<size_t>(curr_strobe_index + w_max), syncmers.size() - 1);
+    uint64_t min_val = std::numeric_limits<uint64_t>::max();
+    uint next_strobe_index = curr_strobe_index;
 
     for (auto i = w_start; i <= w_end && syncmers[i].position <= max_position; i++) {
         assert(i < syncmers.size());
 
         // Method 3' skew sample more for prob exact matching
-        std::bitset<64> b = (strobe1.hash ^ syncmers[i].hash) & q;
+        std::bitset<64> b = (curr_strobe.hash ^ syncmers[i].hash) & q;
         uint64_t res = b.count();
 
         if (res < min_val) {
             min_val = res;
-            strobe2 = syncmers[i];
+            next_strobe_index = i;
         }
     }
-
-    bool main_is_first = strobe1.hash < strobe2.hash;
-    return Randstrobe{
-        randstrobe_hash(strobe1.hash, strobe2.hash, aux_len),
-                      static_cast<uint32_t>(strobe1.position),
-                      static_cast<uint32_t>(strobe2.position), main_is_first
-    };
+    return next_strobe_index;
 }
 
 Randstrobe RandstrobeGenerator::next() {
-    while (syncmers.size() <= w_max) {
+    while (syncmers.size() <= 2 * w_max) {
         Syncmer syncmer = syncmer_iterator.next();
         if (syncmer.is_end()) {
             break;
         }
         syncmers.push_back(syncmer);
     }
-    if (syncmers.size() <= w_min) {
+    if (syncmers.size() <= 2 * w_min) {
         return RandstrobeGenerator::end();
     }
     auto strobe1 = syncmers[0];
-    auto max_position = strobe1.position + max_dist;
-    uint64_t min_val = std::numeric_limits<uint64_t>::max();
-    Syncmer strobe2 = strobe1; // Default if no nearby syncmer
+    auto strobe2_index = get_next_strobe_index(0);
+    auto strobe3_index = get_next_strobe_index(strobe2_index);
+    auto strobe2 = syncmers[strobe2_index];
+    auto strobe3 = syncmers[strobe3_index];
+    syncmers.pop_front();
+    bool main_is_first = strobe1.hash < strobe3.hash;
+    return Randstrobe {
+        randstrobe_hash(strobe1.hash, strobe2.hash, strobe3.hash, aux_len),
+            static_cast<uint32_t>(strobe1.position), static_cast<uint32_t>(strobe2.position),
+            static_cast<uint32_t>(strobe3.position), main_is_first
+    };
+}
 
-    for (auto i = w_min; i < syncmers.size() && syncmers[i].position <= max_position; i++) {
-        assert(i <= w_max);
+uint RandstrobeGenerator::get_next_strobe_index(unsigned int curr_strobe_index) const {
+    auto curr_strobe = syncmers[curr_strobe_index];
+    auto max_position = curr_strobe.position + max_dist;
+    uint64_t min_val = std::numeric_limits<uint64_t>::max();
+    uint next_strobe_index = curr_strobe_index; // Default if no nearby syncmer
+    unsigned int w_start = curr_strobe_index + w_min;
+    unsigned int w_end = std::min(static_cast<size_t>(curr_strobe_index + w_max), syncmers.size() - 1);
+
+    for (auto i = w_start; i <= w_end && syncmers[i].position <= max_position; i++) {
         // Method 3' skew sample more for prob exact matching
-        std::bitset<64> b = (strobe1.hash ^ syncmers[i].hash) & q;
+        std::bitset<64> b = (curr_strobe.hash ^ syncmers[i].hash) & q;
         uint64_t res = b.count();
 
         if (res < min_val) {
             min_val = res;
-            strobe2 = syncmers[i];
+            next_strobe_index = i;
         }
     }
-    syncmers.pop_front();
-    bool main_is_first = strobe1.hash < strobe2.hash;
-    return Randstrobe{
-        randstrobe_hash(strobe1.hash, strobe2.hash, aux_len),
-                      static_cast<uint32_t>(strobe1.position),
-                      static_cast<uint32_t>(strobe2.position), main_is_first
-    };
+    return next_strobe_index;
 }
 
 /*
@@ -243,10 +256,10 @@ QueryRandstrobeVector randstrobes_query(const std::string_view seq, const IndexP
     RandstrobeIterator randstrobe_fwd_iter{syncmers, parameters.randstrobe};
     while (randstrobe_fwd_iter.has_next()) {
         auto randstrobe = randstrobe_fwd_iter.next();
-        const unsigned int partial_start = randstrobe.main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe2_pos;
+        const unsigned int partial_start = randstrobe.main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe3_pos;
         randstrobes.push_back(
             QueryRandstrobe {
-                randstrobe.hash, randstrobe.strobe1_pos, randstrobe.strobe2_pos + parameters.syncmer.k,
+                randstrobe.hash, randstrobe.strobe1_pos, randstrobe.strobe3_pos + parameters.syncmer.k,
                 partial_start, partial_start + parameters.syncmer.k,  false
             }
         );
@@ -269,10 +282,10 @@ QueryRandstrobeVector randstrobes_query(const std::string_view seq, const IndexP
     while (randstrobe_rc_iter.has_next()) {
         auto randstrobe = randstrobe_rc_iter.next();
         bool main_is_first = randstrobe.main_is_first;
-        const unsigned int partial_start = main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe2_pos;
+        const unsigned int partial_start = main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe3_pos;
         randstrobes.push_back(
             QueryRandstrobe {
-                randstrobe.hash, randstrobe.strobe1_pos, randstrobe.strobe2_pos + parameters.syncmer.k,
+                randstrobe.hash, randstrobe.strobe1_pos, randstrobe.strobe3_pos + parameters.syncmer.k,
                 partial_start, partial_start + parameters.syncmer.k, true
             }
         );
