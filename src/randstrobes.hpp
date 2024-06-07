@@ -114,7 +114,7 @@ public:
     }
 
     bool has_next() {
-        return strobe1_index + 2 * w_min < syncmers.size();
+        return strobe1_index + w_min + w_max < syncmers.size();
     }
 
 private:
