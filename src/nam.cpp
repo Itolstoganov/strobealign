@@ -58,7 +58,7 @@ inline void add_to_hits_per_ref_partial(
             adj_ref_start = index.get_strobe1_position(position);
         }
         else {
-            adj_ref_start = index.get_strobe1_position(position) + index.strobe2_offset(position);
+            adj_ref_start = index.get_strobe1_position(position) + index.strobe2_offset(position) + index.strobe3_offset(position);
         }
         adj_ref_end = adj_ref_start + index.k();
 //        int diff = std::abs((query_end - query_start) - (adj_ref_end - adj_ref_start));

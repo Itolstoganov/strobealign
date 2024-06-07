@@ -53,7 +53,7 @@ static inline randstrobe_hash_t randstrobe_hash(syncmer_hash_t hash1,
         std::swap(hash1, hash3);
     }
     return ((hash1 >> aux_len) << aux_len) ^
-            (hash2 >> (64 - aux_len / 2) << aux_len / 2) ^
+            ((hash2 >> (64 - aux_len / 2)) << aux_len / 2) ^
             (hash3 >> (64 - aux_len / 2));
 }
 
