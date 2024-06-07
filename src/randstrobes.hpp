@@ -41,7 +41,7 @@ struct RefRandstrobe {
     }
 
     bool main_is_first() const {
-        return (m_packed >> bit_alloc) & 1;
+        return m_packed & 1;
     }
 
     int reference_index() const {
@@ -53,13 +53,13 @@ struct RefRandstrobe {
     }
 
     int strobe3_offset() const {
-        return m_packed & mask3 >> 1;
+        return (m_packed & mask3) >> 1;
     }
 
 private:
-    static constexpr int mask2 = ((1 << (bit_alloc / 2 + 1)) - 1) << (bit_alloc / 2 + 1);
-    static constexpr int mask3 = ((1 << (bit_alloc / 2 + 1)) - 1) << 1;
-    packed_t m_packed; // packed representation of ref_index and strobe offset
+    static constexpr int mask2 = ((1 << (bit_alloc / 2)) - 1) << (bit_alloc / 2 + 1);
+    static constexpr int mask3 = ((1 << (bit_alloc / 2)) - 1) << 1;
+    packed_t m_packed; // packed representation of ref_index, strobe offsets, and strobe orientation bit
 
 public:
     static constexpr uint32_t max_number_of_references = (1 << (32 - bit_alloc - 1)) - 1; // bit_alloc - 1 because 1 bit to main_is_first()
@@ -131,7 +131,7 @@ public:
     }
 
     bool has_next() {
-        return strobe1_index + 2 * w_min < syncmers.size();
+        return strobe1_index + w_max + w_min < syncmers.size();
     }
 
 private:

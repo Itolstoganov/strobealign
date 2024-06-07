@@ -314,9 +314,8 @@ void StrobemerIndex::assign_randstrobes(size_t ref_index, size_t offset) {
         }
         for (auto randstrobe : chunk) {
             RefRandstrobe::packed_t packed = ref_index << (RefRandstrobe::bit_alloc + 1);
-            uint strobe2_offset = randstrobe.strobe2_pos - randstrobe.strobe1_pos;
-            uint strobe3_offset = randstrobe.strobe3_pos - randstrobe.strobe2_pos;
-
+            int strobe2_offset = randstrobe.strobe2_pos - randstrobe.strobe1_pos;
+            int strobe3_offset = randstrobe.strobe3_pos - randstrobe.strobe2_pos;
             packed |= (strobe2_offset << (RefRandstrobe::bit_alloc / 2 + 1));
             packed |= (strobe3_offset << 1);
             packed |= randstrobe.main_is_first;
