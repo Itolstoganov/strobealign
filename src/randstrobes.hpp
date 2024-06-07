@@ -136,7 +136,12 @@ public:
 
 private:
     Randstrobe get(unsigned int strobe1_index) const;
-    uint get_next_strobe_index(unsigned int curr_strobe_index) const;
+    uint get_next_strobe_index(
+        unsigned int first_strobe_index,
+        unsigned int curr_strobe_index,
+        uint64_t curr_hash,
+        uint strobe_count
+    ) const;
     const std::vector<Syncmer>& syncmers;
     const unsigned w_min;
     const unsigned w_max;
@@ -198,7 +203,12 @@ public:
     Randstrobe end() const { return Randstrobe{0, 0, 0, 0, false}; }
 
 private:
-    uint get_next_strobe_index(unsigned int curr_strobe_index) const;
+    uint get_next_strobe_index(
+        unsigned int first_strobe_index,
+        unsigned int curr_strobe_index,
+        uint64_t curr_hash,
+        uint strobe_count
+    ) const;
 
     SyncmerIterator syncmer_iterator;
     const unsigned w_min;
