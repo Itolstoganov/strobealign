@@ -148,9 +148,11 @@ std::ostream& operator<<(std::ostream& os, const QueryRandstrobe& randstrobe) {
 
 Randstrobe RandstrobeIterator::get(unsigned int strobe1_index) const {
     auto strobe1 = syncmers[strobe1_index];
-    uint strobe2_index = get_next_strobe_index(strobe1_index);
-    uint strobe3_index = get_next_strobe_index(strobe2_index);
+    auto curr_hash = strobe1.hash;
+    uint strobe2_index = get_next_strobe_index(strobe1_index, strobe1_index, curr_hash, 2);
     auto strobe2 = syncmers[strobe2_index];
+    curr_hash ^= strobe2.hash;
+    uint strobe3_index = get_next_strobe_index(strobe1_index, strobe2_index, curr_hash, 3);
     auto strobe3 = syncmers[strobe3_index];
 
     return Randstrobe{
@@ -158,11 +160,14 @@ Randstrobe RandstrobeIterator::get(unsigned int strobe1_index) const {
         static_cast<uint32_t>(strobe2.position), static_cast<uint32_t>(strobe3.position)
     };
 }
-uint RandstrobeIterator::get_next_strobe_index(unsigned int curr_strobe_index) const {
-    auto curr_strobe = syncmers[curr_strobe_index];
-    auto max_position = curr_strobe.position + max_dist;
-    unsigned int w_start = curr_strobe_index + w_min;
-    unsigned int w_end = std::min(static_cast<size_t>(curr_strobe_index + w_max), syncmers.size() - 1);
+uint RandstrobeIterator::get_next_strobe_index(unsigned int first_strobe_index,
+                                               unsigned int curr_strobe_index,
+                                               uint64_t curr_hash,
+                                               uint strobe_count) const {
+    auto first_strobe = syncmers[first_strobe_index];
+    auto max_position = first_strobe.position + max_dist;
+    unsigned int w_start = first_strobe_index + w_min + (strobe_count - 2) * w_max;
+    unsigned int w_end = std::min(static_cast<size_t>(first_strobe_index + (strobe_count - 1) * w_max), syncmers.size() - 1);
     uint64_t min_val = std::numeric_limits<uint64_t>::max();
     uint next_strobe_index = curr_strobe_index;
 
@@ -170,7 +175,7 @@ uint RandstrobeIterator::get_next_strobe_index(unsigned int curr_strobe_index) c
         assert(i < syncmers.size());
 
         // Method 3' skew sample more for prob exact matching
-        std::bitset<64> b = (curr_strobe.hash ^ syncmers[i].hash) & q;
+        std::bitset<64> b = (curr_hash ^ syncmers[i].hash) & q;
         uint64_t res = b.count();
 
         if (res < min_val) {
@@ -193,9 +198,11 @@ Randstrobe RandstrobeGenerator::next() {
         return RandstrobeGenerator::end();
     }
     auto strobe1 = syncmers[0];
-    auto strobe2_index = get_next_strobe_index(0);
-    auto strobe3_index = get_next_strobe_index(strobe2_index);
+    auto curr_hash = strobe1.hash;
+    uint strobe2_index = get_next_strobe_index(0, 0, curr_hash, 2);
     auto strobe2 = syncmers[strobe2_index];
+    curr_hash ^= strobe2.hash;
+    uint strobe3_index = get_next_strobe_index(0, strobe2_index, curr_hash, 3);
     auto strobe3 = syncmers[strobe3_index];
     syncmers.pop_front();
     return Randstrobe{randstrobe_hash(strobe1.hash, strobe2.hash, strobe3.hash),
@@ -203,17 +210,22 @@ Randstrobe RandstrobeGenerator::next() {
                       static_cast<uint32_t>(strobe2.position),
                       static_cast<uint32_t>(strobe3.position)};
 }
-uint RandstrobeGenerator::get_next_strobe_index(unsigned int curr_strobe_index) const {
-    auto curr_strobe = syncmers[curr_strobe_index];
-    auto max_position = curr_strobe.position + max_dist;
+uint RandstrobeGenerator::get_next_strobe_index(unsigned int first_strobe_index,
+                                                unsigned int curr_strobe_index,
+                                                uint64_t curr_hash,
+                                                uint strobe_count) const {
+    auto first_strobe = syncmers[first_strobe_index];
+    auto max_position = first_strobe.position + max_dist;
+    unsigned int w_start = first_strobe_index + w_min + (strobe_count - 2) * w_max;
+    unsigned int w_end = std::min(static_cast<size_t>(first_strobe_index + (strobe_count - 1) * w_max), syncmers.size() - 1);
     uint64_t min_val = std::numeric_limits<uint64_t>::max();
-    uint next_strobe_index = curr_strobe_index; // Default if no nearby syncmer
-    unsigned int w_start = curr_strobe_index + w_min;
-    unsigned int w_end = std::min(static_cast<size_t>(curr_strobe_index + w_max), syncmers.size() - 1);
+    uint next_strobe_index = curr_strobe_index;
 
     for (auto i = w_start; i <= w_end && syncmers[i].position <= max_position; i++) {
+        assert(i < syncmers.size());
+
         // Method 3' skew sample more for prob exact matching
-        std::bitset<64> b = (curr_strobe.hash ^ syncmers[i].hash) & q;
+        std::bitset<64> b = (curr_hash ^ syncmers[i].hash) & q;
         uint64_t res = b.count();
 
         if (res < min_val) {
