@@ -6,6 +6,34 @@
 #include "index.hpp"
 #include "randstrobes.hpp"
 
+struct PartialSeed {
+    size_t hash;
+    unsigned int start;
+    bool is_reverse;
+    bool operator==(const PartialSeed& rhs) const {
+        return (hash == rhs.hash) && (start == rhs.start) && (is_reverse == rhs.is_reverse);
+    }
+};
+
+struct MainHit {
+    int query_start;
+    int query_end;
+    int ref_start;
+    int ref_end;
+};
+
+struct RescueHit {
+    size_t position;
+    unsigned int count;
+    unsigned int query_start;
+    unsigned int query_end;
+
+    bool operator< (const RescueHit& rhs) const {
+        return std::tie(count, query_start, query_end)
+               < std::tie(rhs.count, rhs.query_start, rhs.query_end);
+    }
+};
+
 // Non-overlapping approximate match
 struct Nam {
     int nam_id;
@@ -44,6 +72,27 @@ std::vector<Nam> find_nams_rescue(
     const QueryRandstrobeVector &query_randstrobes,
     const StrobemerIndex& index,
     unsigned int rescue_cutoff
+);
+
+bool partial_search(
+    std::vector<PartialSeed>& partial_queried,
+    std::array<robin_hood::unordered_map<unsigned int, std::vector<MainHit>>, 2> &hits_per_ref,
+    const StrobemerIndex& index,
+    const QueryRandstrobe &qr,
+    int &total_hits,
+    int &nr_good_hits,
+    uint aux_len,
+    uint level
+);
+
+bool partial_search_rescue(
+    std::vector<PartialSeed>& partial_queried,
+    std::vector<RescueHit>& hits_fw,
+    std::vector<RescueHit>& hits_rc,
+    const StrobemerIndex& index,
+    const QueryRandstrobe &qr,
+    uint aux_len,
+    uint level
 );
 
 std::ostream& operator<<(std::ostream& os, const Nam& nam);

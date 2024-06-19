@@ -268,11 +268,16 @@ QueryRandstrobeVector randstrobes_query(const std::string_view seq, const IndexP
     RandstrobeIterator randstrobe_fwd_iter{syncmers, parameters.randstrobe};
     while (randstrobe_fwd_iter.has_next()) {
         auto randstrobe = randstrobe_fwd_iter.next();
-        const unsigned int partial_start = randstrobe.main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe3_pos;
+        //Main is first: ([-----]   -----)   -----
+        //Main is last:    -----   (-----   [-----])
+        const unsigned int partial_start2 = randstrobe.main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe3_pos;
+        const unsigned int partial_end2 = partial_start2 + parameters.syncmer.k;
+        const unsigned int partial_start1 = randstrobe.main_is_first ? randstrobe.strobe1_pos: randstrobe.strobe2_pos;
+        const unsigned int partial_end1 = (randstrobe.main_is_first ? randstrobe.strobe2_pos : randstrobe.strobe3_pos) + parameters.syncmer.k;
         randstrobes.push_back(
             QueryRandstrobe {
                 randstrobe.hash, randstrobe.strobe1_pos, randstrobe.strobe3_pos + parameters.syncmer.k,
-                partial_start, partial_start + parameters.syncmer.k,  false
+                {partial_start1, partial_start2}, {partial_end1, partial_end2}, false
             }
         );
     }
@@ -293,12 +298,14 @@ QueryRandstrobeVector randstrobes_query(const std::string_view seq, const IndexP
     RandstrobeIterator randstrobe_rc_iter{syncmers, parameters.randstrobe};
     while (randstrobe_rc_iter.has_next()) {
         auto randstrobe = randstrobe_rc_iter.next();
-        bool main_is_first = randstrobe.main_is_first;
-        const unsigned int partial_start = main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe3_pos;
+        const unsigned int partial_start2 = randstrobe.main_is_first ? randstrobe.strobe1_pos : randstrobe.strobe3_pos;
+        const unsigned int partial_end2 = partial_start2 + parameters.syncmer.k;
+        const unsigned int partial_start1 = randstrobe.main_is_first ? randstrobe.strobe1_pos: randstrobe.strobe2_pos;
+        const unsigned int partial_end1 = (randstrobe.main_is_first ? randstrobe.strobe2_pos : randstrobe.strobe3_pos) + parameters.syncmer.k;
         randstrobes.push_back(
             QueryRandstrobe {
                 randstrobe.hash, randstrobe.strobe1_pos, randstrobe.strobe3_pos + parameters.syncmer.k,
-                partial_start, partial_start + parameters.syncmer.k, true
+                {partial_start1, partial_start2}, {partial_end1, partial_end2}, true
             }
         );
     }

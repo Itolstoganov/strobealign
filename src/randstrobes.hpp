@@ -69,8 +69,8 @@ struct QueryRandstrobe {
     randstrobe_hash_t hash;
     unsigned int start;
     unsigned int end;
-    unsigned int partial_start;
-    unsigned int partial_end;
+    std::array<unsigned int, 2> partial_starts;
+    std::array<unsigned int, 2> partial_ends;
     bool is_reverse;
 };
 
