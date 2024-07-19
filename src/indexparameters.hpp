@@ -22,7 +22,7 @@ struct SyncmerParameters {
     }
 
     void verify() const {
-        if (k <= 7 || k > 32) {
+        if (k <= 4 || k > 32) {
             throw BadParameter("k not in [8,32]");
         }
         if (s > k) {
