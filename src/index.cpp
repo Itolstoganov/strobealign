@@ -332,6 +332,7 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
     randstrobe_hash_t tot_seed_count_1000_limit = 0;
 
     size_t seed_length = 0;
+    size_t distinct_seeds = 1;
 
     for (size_t it = 0; it < randstrobes.size(); it++) {
         seed_length = strobe2_offset(it) + strobe3_offset(it) + k;
@@ -339,6 +340,11 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
             continue;
         }
         auto count = get_count(it);
+        if (it != randstrobes.size() - 1 && it != 0) {
+            if (get_hash(it) != get_hash(it + 1)) {
+                ++distinct_seeds;
+            }
+        }
 
         if (seed_length < max_size){
             log_count[seed_length] ++;
@@ -397,6 +403,7 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
     double fraction_masked = 1.0 - (double) tot_seed_count_1000_limit/ (double) tot_seed_count;
     double fraction_unique = (double) tot_unique / (double) tot_seed_count;
     log_file << median << ',' << tot_seed_count << ',' << 100*fraction_masked << std::endl;
-    log_file << "E-hits" << ',' << e_hits <<  std::endl;
-    log_file << "Unique" << ',' << fraction_unique << std::endl;
+    log_file << "E-hits," << e_hits <<  std::endl;
+    log_file << "Unique," << fraction_unique << std::endl;
+    log_file << "Distinct," << distinct_seeds << std::endl;
 }
