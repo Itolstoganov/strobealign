@@ -401,7 +401,7 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
     log_file << "E_size for total seeding wih max seed size m below (m, tot_seeds, E_hits)" << std::endl;
     double e_hits = (double) tot_seed_count_sq/ (double) tot_seed_count;
     double fraction_masked = 1.0 - (double) tot_seed_count_1000_limit/ (double) tot_seed_count;
-    double fraction_unique = (double) tot_unique / (double) tot_seed_count;
+    double fraction_unique = (double) tot_unique / (double) distinct_seeds;
     log_file << median << ',' << tot_seed_count << ',' << 100*fraction_masked << std::endl;
     log_file << "E-hits," << e_hits <<  std::endl;
     log_file << "Unique," << fraction_unique << std::endl;
