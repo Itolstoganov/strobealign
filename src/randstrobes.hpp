@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <array>
 #include <deque>
 #include <algorithm>
 #include <iostream>
