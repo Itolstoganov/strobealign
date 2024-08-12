@@ -202,6 +202,7 @@ std::pair<float, std::vector<Nam>> find_nams(
     hits_per_ref[0].reserve(100);
     hits_per_ref[1].reserve(100);
     int nr_good_hits = 0, total_hits = 0;
+    int hit_threshold = 5;
     for (const auto &q : query_randstrobes) {
         size_t position = index.find(q.hash);
         if (position != index.end()){
@@ -212,11 +213,30 @@ std::pair<float, std::vector<Nam>> find_nams(
             nr_good_hits++;
             add_to_hits_per_ref_full(hits_per_ref[q.is_reverse], q.start, q.end, index, position);
         }
-        else {
-            int shift = aux_len / 2;
-            bool found_first_lvl_hit = partial_search(partial_queried[0], hits_per_ref, index, q, total_hits, nr_good_hits, shift, 1);
-            if (not found_first_lvl_hit) {
-                partial_search(partial_queried[1], hits_per_ref, index, q, total_hits, nr_good_hits, shift * 2, 2);
+    }
+    if (nr_good_hits < hit_threshold) {
+        int partial_hit_threshold = 10;
+        int shift = aux_len / 2;
+        for (int i = 1; i <= 2; ++i) {
+            hits_per_ref[0].clear();
+            hits_per_ref[1].clear();
+            partial_queried[0].clear();
+            partial_queried[1].clear();
+            hits_per_ref[0].reserve(100);
+            hits_per_ref[1].reserve(100);
+            partial_queried[0].reserve(10);
+            partial_queried[1].reserve(10);
+            nr_good_hits = 0;
+            for (const auto &q: query_randstrobes) {
+                bool found_hit = partial_search(
+                    partial_queried[0], hits_per_ref, index, q, total_hits, nr_good_hits, shift * i, i
+                );
+                if (found_hit) {
+                    ++nr_good_hits;
+                }
+            }
+            if (nr_good_hits > partial_hit_threshold) {
+                continue;
             }
         }
     }
