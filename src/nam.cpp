@@ -218,14 +218,14 @@ std::pair<float, std::vector<Nam>> find_nams(
         int partial_hit_threshold = 10;
         int shift = aux_len / 2;
         for (int i = 1; i <= 2; ++i) {
-            hits_per_ref[0].clear();
-            hits_per_ref[1].clear();
-            partial_queried[0].clear();
-            partial_queried[1].clear();
-            hits_per_ref[0].reserve(100);
-            hits_per_ref[1].reserve(100);
-            partial_queried[0].reserve(10);
-            partial_queried[1].reserve(10);
+//            hits_per_ref[0].clear();
+//            hits_per_ref[1].clear();
+//            partial_queried[0].clear();
+//            partial_queried[1].clear();
+//            hits_per_ref[0].reserve(100);
+//            hits_per_ref[1].reserve(100);
+//            partial_queried[0].reserve(10);
+//            partial_queried[1].reserve(10);
             nr_good_hits = 0;
             for (const auto &q: query_randstrobes) {
                 bool found_hit = partial_search(

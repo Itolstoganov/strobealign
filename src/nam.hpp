@@ -11,7 +11,7 @@ struct PartialSeed {
     unsigned int start;
     bool is_reverse;
     bool operator==(const PartialSeed& rhs) const {
-        return (hash == rhs.hash) && (start == rhs.start) && (is_reverse == rhs.is_reverse);
+        return start == rhs.start && is_reverse == rhs.is_reverse;
     }
 };
 
