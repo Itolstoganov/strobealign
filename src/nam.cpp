@@ -194,9 +194,8 @@ std::pair<float, std::vector<Nam>> find_nams(
     const StrobemerIndex& index
 ) {
     const unsigned int aux_len = 24; //parameters.randstrobe.aux_len;
-    std::array<std::vector<PartialSeed>, 2> partial_queried; // TODO: is a small set more efficient than linear search in a small vector?
-    partial_queried[0].reserve(10);
-    partial_queried[1].reserve(10);
+    std::vector<PartialSeed> partial_queried; // TODO: is a small set more efficient than linear search in a small vector?
+    partial_queried.reserve(10);
 
     std::array<robin_hood::unordered_map<unsigned int, std::vector<MainHit>>, 2> hits_per_ref;
     hits_per_ref[0].reserve(100);
@@ -212,24 +211,17 @@ std::pair<float, std::vector<Nam>> find_nams(
             }
             nr_good_hits++;
             add_to_hits_per_ref_full(hits_per_ref[q.is_reverse], q.start, q.end, index, position);
+            PartialSeed ph = {q.hash >> aux_len, q.start, q.is_reverse};
+            partial_queried.push_back(ph);
         }
     }
     if (nr_good_hits < hit_threshold) {
         int partial_hit_threshold = 10;
         int shift = aux_len / 2;
         for (int i = 1; i <= 2; ++i) {
-//            hits_per_ref[0].clear();
-//            hits_per_ref[1].clear();
-//            partial_queried[0].clear();
-//            partial_queried[1].clear();
-//            hits_per_ref[0].reserve(100);
-//            hits_per_ref[1].reserve(100);
-//            partial_queried[0].reserve(10);
-//            partial_queried[1].reserve(10);
-            nr_good_hits = 0;
             for (const auto &q: query_randstrobes) {
                 bool found_hit = partial_search(
-                    partial_queried[0], hits_per_ref, index, q, total_hits, nr_good_hits, shift * i, i
+                    partial_queried, hits_per_ref, index, q, total_hits, nr_good_hits, shift * i, i
                 );
                 if (found_hit) {
                     ++nr_good_hits;
@@ -323,14 +315,13 @@ bool partial_search(
         if (partial_pos != index.end()) {
             total_hits++;
             if (index.is_partial_filtered(partial_pos, level)) {
-                partial_queried.push_back(ph);
                 return false;
             }
             nr_good_hits++;
             add_to_hits_per_ref_partial(hits_per_ref[qr.is_reverse], qr.partial_starts[level - 1], qr.partial_ends[level - 1], index, partial_pos, level);
+            partial_queried.push_back(ph);
             return true;
         }
-        partial_queried.push_back(ph);
         return false;
     }
     return false;
