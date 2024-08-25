@@ -15,7 +15,7 @@ struct PartialSeed {
         unsigned int start;
         bool is_reverse;
         bool operator==(const PartialSeed& rhs) const {
-            return (hash == rhs.hash) && (start == rhs.start) && (is_reverse == rhs.is_reverse);
+            return (start == rhs.start) && (is_reverse == rhs.is_reverse);
         }
     };
 
@@ -221,20 +221,26 @@ std::pair<float, std::vector<Nam>> find_nams(
     hits_per_ref[0].reserve(100);
     hits_per_ref[1].reserve(100);
     int nr_good_hits = 0, total_hits = 0;
+    const int hit_threshold = 5;
     for (const auto &q : query_randstrobes) {
         size_t position = index.find(q.hash);
-        if (position != index.end()){
+        if (position != index.end()) {
             total_hits++;
             if (index.is_filtered(position)) {
                 continue;
             }
             nr_good_hits++;
             add_to_hits_per_ref_full(hits_per_ref[q.is_reverse], q.start, q.end, index, position);
+            PartialSeed ph = {q.hash >> aux_len, q.start, q.is_reverse};
+            partial_queried.push_back(ph);
         }
-        else {
+    }
+    if (nr_good_hits < hit_threshold) {
+        for (const auto& q : query_randstrobes) {
             PartialSeed ph = {q.hash >> aux_len, q.partial_start, q.is_reverse};
-            bool already_queried = std::find(partial_queried.begin(), partial_queried.end(), ph) != partial_queried.end();
-            if ( !already_queried ){
+            bool already_queried =
+                std::find(partial_queried.begin(), partial_queried.end(), ph) != partial_queried.end();
+            if (!already_queried) {
                 size_t partial_pos = index.partial_find(q.hash);
                 if (partial_pos != index.end()) {
                     total_hits++;
@@ -243,7 +249,9 @@ std::pair<float, std::vector<Nam>> find_nams(
                         continue;
                     }
                     nr_good_hits++;
-                    add_to_hits_per_ref_partial(hits_per_ref[q.is_reverse], q.partial_start, q.partial_end, index, partial_pos);
+                    add_to_hits_per_ref_partial(
+                        hits_per_ref[q.is_reverse], q.partial_start, q.partial_end, index, partial_pos
+                    );
                 }
                 partial_queried.push_back(ph);
             }
