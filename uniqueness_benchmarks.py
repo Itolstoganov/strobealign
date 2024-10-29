@@ -25,7 +25,9 @@ def compile(build_dir: str, versions: dict, nthreads: int):
         print(os.getcwd())
         cmake_cmd = " ".join(["cmake", "-B", "build", "-DENABLE_AVX=ON"])
         subprocess.run(cmake_cmd, shell=True, check=True)
+        print(os.getcwd(), "running make")
         make_cmd = " ".join(["make", "-j", str(nthreads), "-C", "build"])
+        print(make_cmd)
         subprocess.run(make_cmd, shell=True)
         print(bin_name)
         shutil.copy2("build/strobealign", bin_name)
@@ -199,7 +201,7 @@ def print_results_table(uniqueness_results: dict, outpath: str):
 def createparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--ref', "-r", help="Reference genome")
-    parser.add_argument('--threads', "-t", help="Number of threads", type=int)
+    parser.add_argument('--threads', "-t", help="Number of threads", type=int, default=4)
     parser.add_argument('--mem', '-m', help="Max RAM (GB)", type=int, default=8)
     parser.add_argument('--k', '-k', help="main k value", type=int, default=60)
     parser.add_argument('--output', '-o', help="Output directory")
