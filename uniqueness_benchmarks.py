@@ -23,7 +23,7 @@ def compile(build_dir: str, versions: dict, nthreads: int):
         version_repo = pygit2.clone_repository(MC_REPO, repo_path, checkout_branch=branch)
         os.chdir(repo_path)
         print(os.getcwd())
-        cmake_cmd = " ".join(["cmake", "-B", "build", "-DENABLE_AVX=ON"])
+        cmake_cmd = " ".join(["cmake", "-B", "build", "-DENABLE_AVX=ON", "-DISAL=download"])
         subprocess.run(cmake_cmd, shell=True, check=True)
         print(os.getcwd(), "running make")
         make_cmd = " ".join(["make", "-j", str(nthreads), "-C", "build"])
