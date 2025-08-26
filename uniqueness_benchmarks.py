@@ -47,12 +47,12 @@ def make_parameters(versions, main_k: int, mem: int, threads: int):
     w_max = (main_k // 2) * 3
     parameters["randstrobes\t(2,{},{},{})".format(main_k // 2, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {}".format(main_k // 2, main_k // 2, w_min, w_max), \
         version="2_randstrobes", search_level=1, type="randstrobes", k=main_k // 2)
-    parameters["multi-context\t(2,{},{},{})".format(main_k // 2, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {}".format(main_k // 2, main_k // 2, w_min, w_max), \
-        version="mcs-optimized-parameters", search_level=2, type="mcs", k=main_k // 2)
+    parameters["multi-context\t(2,{},{},{})".format(main_k // 2, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {} --mcs".format(main_k // 2, main_k // 2, w_min, w_max), \
+        version="2-mcs", search_level=2, type="mcs", k=main_k // 2)
     parameters["randstrobes\t(3,{},{},{})".format(main_k // 3, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {}".format(main_k // 3, main_k // 3, w_min, w_max), \
         version="3_randstrobes", search_level=1, type="randstrobes", k=main_k // 3)
-    parameters["multi-context\t(3,{},{},{})".format(main_k // 3, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {}".format(main_k // 3, main_k // 3, w_min, w_max), \
-        version="3_mcs", search_level=3, type="mcs", k=main_k // 3)
+    parameters["multi-context\t(3,{},{},{})".format(main_k // 3, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {} --mcs".format(main_k // 3, main_k // 3, w_min, w_max), \
+        version="3-strobes-experimental", search_level=3, type="mcs", k=main_k // 3)
     return parameters
 
 
@@ -68,7 +68,7 @@ def parse_index_stats(index_outpath: str, search_level: int):
                 if search_level == 3:
                     line_lst[2], line_lst[3] = line_lst[3], line_lst[2]
                 print(line_lst)
-                results["E-hits"] = ["{:.2f}".format(float(x)) if x != '-' else '-' for x in line_lst[1:]]
+                results["E-hits"] = ["{:.3f}".format(float(x)) if x != '-' else '-' for x in line_lst[1:]]
             if line.startswith("Unique"):
                 line_lst = line.strip().split(",")
                 assert(len(line_lst) == search_level + 1)
@@ -76,7 +76,7 @@ def parse_index_stats(index_outpath: str, search_level: int):
                     line_lst.append("-")
                 if search_level == 3:
                     line_lst[2], line_lst[3] = line_lst[3], line_lst[2]
-                results["Unique"] = ["{:.2f}".format(float(x)) if x != '-' else '-' for x in line_lst[1:]]
+                results["Unique"] = ["{:.3f}".format(float(x)) if x != '-' else '-' for x in line_lst[1:]]
             if line.startswith("Distinct"):
                 line_lst = line.strip().split(",")
                 assert(len(line_lst) == search_level + 1)
@@ -84,7 +84,7 @@ def parse_index_stats(index_outpath: str, search_level: int):
                     line_lst.append("-")
                 if search_level == 3:
                     line_lst[2], line_lst[3] = line_lst[3], line_lst[2]
-                results["Distinct"] = ["{:.2f}".format(float(x) / 1000000.0) if x != '-' else '-' for x in line_lst[1:]]
+                results["Distinct"] = ["{:.1f}".format(float(x) / 1000000.0) if x != '-' else '-' for x in line_lst[1:]]
     return results
 
 
@@ -103,9 +103,9 @@ def parse_kmc_stats(index_path):
                 num_unique = num_seeds
             num_distinct += num_seeds
     results = {}
-    results["E-hits"] = ["{:.2f}".format(float(sum_occ_sq) / float(sum_occ)), '-', '-']
-    results["Unique"] = ["{:.2f}".format(float(num_unique) / float(num_distinct)), '-', '-']
-    results["Distinct"] = ["{:.2f}".format(float(num_distinct) / 1000000.0), '-', '-']
+    results["E-hits"] = ["{:.3f}".format(float(sum_occ_sq) / float(sum_occ)), '-', '-']
+    results["Unique"] = ["{:.3f}".format(float(num_unique) / float(num_distinct)), '-', '-']
+    results["Distinct"] = ["{:.1f}".format(float(num_distinct) / 1000000.0), '-', '-']
     return results
 
 
@@ -182,14 +182,11 @@ def print_results_table(uniqueness_results: dict, outpath: str):
     for protocol, results in uniqueness_results.items():
         table_string += protocol.replace("\t"," & ")
         table_string += " & "
-        # print(protocol_results[0.01])
         table_string += " & ".join(results["Unique"])
         table_string += " & "
         table_string += " & ".join(results["E-hits"])
         table_string += " & "
         table_string += " & ".join(results["Distinct"])
-        # mut_freq_results = [" & ".join([str(round(r, 1)) for r in protocol_results[mut_freq]]) for mut_freq in mut_freqs]
-        # table_string += " & ".join(mut_freq_results)
         table_string += " \\\\\n"
     table_string += "\\end{tabular}\n"
     table_string += "\\caption{}\n"
@@ -220,7 +217,7 @@ os.mkdir(output_dir)
 build_dir = os.path.join(output_dir, "bin")
 nthreads = args.threads
 
-versions = {"3_randstrobes": "3_randstrobes", "2_mcs": "mcs-optimized-parameters", "2_randstrobes": "2_randstrobes", "3_mcs": "3_mcs"}
+versions = {"3_randstrobes": "3_randstrobes", "2_mcs": "2-mcs", "2_randstrobes": "2_randstrobes", "3_mcs": "3-strobes-experimental"}
 
 compile(build_dir, versions, nthreads)
 
