@@ -330,21 +330,40 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
     std::vector<randstrobe_hash_t> log_count_squared(max_size,0);
     randstrobe_hash_t tot_seed_count = 0;
     randstrobe_hash_t tot_seed_count_sq = 0;
+    randstrobe_hash_t tot_seed_count_lv1_sq = 0;
+    randstrobe_hash_t tot_unique = 0;
+    randstrobe_hash_t tot_unique_lv1 = 0;
 
     std::vector<randstrobe_hash_t> log_count_1000_limit(max_size, 0);  // stores count and each index represents the length
     randstrobe_hash_t tot_seed_count_1000_limit = 0;
 
     size_t seed_length = 0;
+    size_t distinct_seeds = 1;
+    size_t distinct_seeds_lv1 = 1;
 
     for (size_t it = 0; it < randstrobes.size(); it++) {
         seed_length = strobe2_offset(it) + k;
+        if (seed_length == k) {
+            continue;
+        }
         auto count = get_count_full(find_full(get_hash(it)));
+        auto count_lv1 = get_count_partial(find_partial(get_hash(it)));
+
+        if (it != randstrobes.size() - 1 && it != 0) {
+            if (get_hash(it) != get_hash(it + 1)) {
+                ++distinct_seeds;
+            }
+            if (get_main_hash(it) != get_main_hash(it + 1)) {
+                ++distinct_seeds_lv1;
+            }
+        }
 
         if (seed_length < max_size){
             log_count[seed_length] ++;
             log_count_squared[seed_length] += count;
             tot_seed_count ++;
             tot_seed_count_sq += count;
+            tot_seed_count_lv1_sq += count_lv1;
             if (count <= 1000){
                 log_count_1000_limit[seed_length] ++;
                 tot_seed_count_1000_limit ++;
@@ -356,6 +375,10 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
 
         if (count == 1 && seed_length < max_size) {
             log_unique[seed_length]++;
+            ++tot_unique;
+        }
+        if (count_lv1 == 1 && seed_length < max_size) {
+            ++tot_unique_lv1;
         }
         if (count >= 10 && seed_length < max_size) {
             log_repetitive[seed_length]++;
@@ -375,11 +398,10 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
 
     // Get median
     size_t n = 0;
-    size_t median = 0;
+    int median = 0;
     for (size_t i = 0; i < log_count.size(); ++i) {
         n += log_count[i];
         if (n >= tot_seed_count/2) {
-            median = i;
             break;
         }
     }
@@ -392,9 +414,14 @@ void StrobemerIndex::print_diagnostics(const std::string& logfile_name, int k) c
         }
     }
 
-    log_file << "E_size for total seeding with median seed size m below (m, tot_seeds, E_hits, fraction_masked)"
-             << std::endl;
+    log_file << "E_size for total seeding wih max seed size m below (m, tot_seeds, E_hits)" << std::endl;
     double e_hits = (double) tot_seed_count_sq/ (double) tot_seed_count;
+    double e_hits_lv1 = (double) tot_seed_count_lv1_sq / (double) tot_seed_count;
     double fraction_masked = 1.0 - (double) tot_seed_count_1000_limit/ (double) tot_seed_count;
-    log_file << median << ',' << tot_seed_count << ',' << e_hits << ',' << 100*fraction_masked << std::endl;
+    double fraction_unique = (double) tot_unique / (double) distinct_seeds;
+    double fraction_unique_lv1 = (double) tot_unique_lv1 / (double) distinct_seeds_lv1;
+    log_file << median << ',' << tot_seed_count << ',' << 100*fraction_masked << std::endl;
+    log_file << "E-hits," << e_hits << ',' << e_hits_lv1 << std::endl;
+    log_file << "Unique," << fraction_unique << ',' << fraction_unique_lv1 << std::endl;
+    log_file << "Distinct," << distinct_seeds << ',' << distinct_seeds_lv1 << std::endl;
 }
