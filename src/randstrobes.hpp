@@ -17,7 +17,7 @@
 using syncmer_hash_t = uint64_t;
 using randstrobe_hash_t = uint64_t;
 
-static constexpr uint64_t RANDSTROBE_HASH_MASK = 0xFFFFFFFFFFFF0000;
+static constexpr uint64_t RANDSTROBE_HASH_MASK = 0xFFFFFFFFFFFFFF00;
 
 struct RefRandstrobe {
 private:
@@ -30,7 +30,7 @@ public:
     RefRandstrobe() : m_hash_offset_flag(0), m_position(0), m_ref_index(0) { }
 
     RefRandstrobe(randstrobe_hash_t hash, uint32_t position, uint32_t ref_index, uint8_t second_offset, uint8_t third_offset)
-        : m_hash_offset_flag((hash & RANDSTROBE_HASH_MASK) ^ (second_offset << 8) ^ third_offset)
+        : m_hash_offset_flag((hash & RANDSTROBE_HASH_MASK) ^ second_offset)
         , m_position(position)
         , m_ref_index(ref_index)
     { }
@@ -50,11 +50,11 @@ public:
     }
 
     uint8_t strobe2_offset() const {
-        return (m_hash_offset_flag >> 8) & 0xff;
+        return m_hash_offset_flag & 0xff;
     }
 
     uint8_t strobe3_offset() const {
-        return m_hash_offset_flag & 0xff;
+        return 0;
     }
 
     randstrobe_hash_t hash() const {

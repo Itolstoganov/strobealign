@@ -94,8 +94,8 @@ public:
               max_dist,
               std::max(0, k / (k - s + 1) + l),
               k / (k - s + 1) + u,
-              ~0ul << (16 + 2 * aux_len),
-              (~0ul << (16 + aux_len)) ^ (~0ul << (16 + 2 * aux_len))
+              ~0ul << (8 + 2 * aux_len),
+              (~0ul << (8 + aux_len)) ^ (~0ul << (8 + 2 * aux_len))
           ) {
         verify(aux_len);
     }
