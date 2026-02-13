@@ -10,6 +10,6 @@
 ```
 3. Run the benchmark script
 ```
-  ./uniqueness_benchmarks.py -r <reference genome> -o <output directory>
+  ./uniqueness_benchmarks.py -r <reference genome> -k 48 -o <output directory>
 ```
 4. The results table can be found in the `output/stats.tex` file
