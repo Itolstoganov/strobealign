@@ -217,7 +217,7 @@ os.mkdir(output_dir)
 build_dir = os.path.join(output_dir, "bin")
 nthreads = args.threads
 
-versions = {"3_randstrobes": "3_randstrobes", "2_mcs": "2-mcs", "2_randstrobes": "2_randstrobes", "3_mcs": "3-strobes-experimental"}
+versions = {"3_randstrobes": "3_randstrobes", "2_mcs": "2-mcs", "2_randstrobes": "2_randstrobes", "3_mcs": "3-strobes"}
 
 compile(build_dir, versions, nthreads)
 
