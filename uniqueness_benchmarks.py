@@ -52,7 +52,7 @@ def make_parameters(versions, main_k: int, mem: int, threads: int):
     parameters["randstrobes\t(3,{},{},{})".format(main_k // 3, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {}".format(main_k // 3, main_k // 3, w_min, w_max), \
         version="3_randstrobes", search_level=1, type="randstrobes", k=main_k // 3)
     parameters["multi-context\t(3,{},{},{})".format(main_k // 3, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {} --mcs".format(main_k // 3, main_k // 3, w_min, w_max), \
-        version="3-strobes-experimental", search_level=3, type="mcs", k=main_k // 3)
+        version="3-strobes", search_level=3, type="mcs", k=main_k // 3)
     return parameters
 
 
