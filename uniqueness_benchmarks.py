@@ -52,7 +52,7 @@ def make_parameters(versions, main_k: int, mem: int, threads: int):
     parameters["randstrobes\t(3,{},{},{})".format(main_k // 3, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {}".format(main_k // 3, main_k // 3, w_min, w_max), \
         version="3_randstrobes", search_level=1, type="randstrobes", k=main_k // 3)
     parameters["multi-context\t(3,{},{},{})".format(main_k // 3, w_min, w_max)] = Run(params="-k {} -s {} -l {} -u {} --mcs".format(main_k // 3, main_k // 3, w_min, w_max), \
-        version="3-strobes", search_level=3, type="mcs", k=main_k // 3)
+        version="3-mcs", search_level=3, type="mcs", k=main_k // 3)
     return parameters
 
 
@@ -217,7 +217,7 @@ os.mkdir(output_dir)
 build_dir = os.path.join(output_dir, "bin")
 nthreads = args.threads
 
-versions = {"3_randstrobes": "3_randstrobes", "2_mcs": "2-mcs", "2_randstrobes": "2_randstrobes", "3_mcs": "3-strobes"}
+versions = {"3_randstrobes": "3_randstrobes", "2_mcs": "2-mcs", "2_randstrobes": "2_randstrobes", "3_mcs": "3-mcs"}
 
 compile(build_dir, versions, nthreads)
 
